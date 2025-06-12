@@ -905,6 +905,60 @@ inline static void ggml_vec_silu_backward_f16(const int n, ggml_fp16_t * dx, con
     }
 }
 
+inline static void ggml_vec_reglu_f32 (const int n, float * y, const float * x) {
+    for (int i = 0; i < n; ++i) {
+        y[i] = (x[i] > 0.f) ? x[i] * x[i + n] : 0.f;
+    }
+}
+
+inline static void ggml_vec_reglu_f16 (const int n, ggml_fp16_t * y, const ggml_fp16_t * x) {
+    for (int i = 0; i < n; ++i) {
+        float v = GGML_FP16_TO_FP32(x[i]);
+        y[i] = GGML_FP32_TO_FP16((v > 0.f) ? v * GGML_FP16_TO_FP32(x[i + n]) : 0.f);
+    }
+}
+
+#ifdef GGML_GELU_FP16
+inline static void ggml_vec_geglu_f32(const int n, float * y, const float * x) {
+    uint16_t t;
+    for (int i = 0; i < n; ++i) {
+        if (x[i] <= -10.0f) {
+            y[i] = 0.0f;
+        } else if (x[i] >= 10.0f) {
+            y[i] = x[i] * x[i + n];
+        } else {
+            ggml_fp16_t fp16 = GGML_FP32_TO_FP16(x[i]);
+            memcpy(&t, &fp16, sizeof(uint16_t));
+            y[i] = GGML_FP16_TO_FP32(ggml_table_gelu_f16[t]) * x[i + n];
+        }
+    }
+}
+#else
+inline static void ggml_vec_geglu_f32(const int n, float * y, const float * x) {
+    for (int i = 0; i < n; ++i) {
+        y[i] = ggml_gelu_f32(x[i]) * x[i + n];
+    }
+}
+#endif
+
+inline static void ggml_vec_geglu_f16(const int n, ggml_fp16_t * y, const ggml_fp16_t * x) {
+    const uint16_t * i16 = (const uint16_t *) x;
+    for (int i = 0; i < n; ++i) {
+        float g = GGML_FP16_TO_FP32(x[i + n]);
+        y[i] = ggml_table_gelu_f16[i16[i]] * g;
+    }
+}
+
+void ggml_vec_swiglu_f32(const int n, float * y, const float * x);
+
+inline static void ggml_vec_swiglu_f16(const int n, ggml_fp16_t * y, const ggml_fp16_t * x) {
+    for (int i = 0; i < n; ++i) {
+        float v = GGML_FP16_TO_FP32(x[i]);
+        float g = GGML_FP16_TO_FP32(x[i + n]);
+        y[i] = GGML_FP32_TO_FP16((v/(1.0f + expf(-v))) * g);
+    }
+}
+
 inline static void ggml_vec_sum_f32(const int n, float * s, const float * x) {
 #ifndef GGML_USE_ACCELERATE
     ggml_float sum = 0.0;

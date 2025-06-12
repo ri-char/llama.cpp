@@ -537,6 +537,9 @@ extern "C" {
         GGML_UNARY_OP_HARDSIGMOID,
         GGML_UNARY_OP_EXP,
         GGML_UNARY_OP_GELU_ERF,
+        GGML_UNARY_OP_REGLU,
+        GGML_UNARY_OP_GEGLU,
+        GGML_UNARY_OP_SWIGLU,
 
         GGML_UNARY_OP_COUNT,
     };
@@ -1082,6 +1085,18 @@ extern "C" {
             struct ggml_tensor  * a);
 
     GGML_API struct ggml_tensor * ggml_exp_inplace(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+
+    GGML_API struct ggml_tensor * ggml_reglu(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+
+    GGML_API struct ggml_tensor * ggml_geglu(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+
+    GGML_API struct ggml_tensor * ggml_swiglu(
             struct ggml_context * ctx,
             struct ggml_tensor  * a);
 

@@ -1107,9 +1107,12 @@ static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
     "HARDSIGMOID",
     "EXP",
     "GELU_ERF",
+    "REGLU",
+    "GEGLU",
+    "SWIGLU",
 };
 
-static_assert(GGML_UNARY_OP_COUNT == 15, "GGML_UNARY_OP_COUNT != 15");
+static_assert(GGML_UNARY_OP_COUNT == 18, "GGML_UNARY_OP_COUNT != 18");
 
 
 static_assert(sizeof(struct ggml_object)%GGML_MEM_ALIGN == 0, "ggml_object size must be a multiple of GGML_MEM_ALIGN");
@@ -2614,6 +2617,57 @@ struct ggml_tensor * ggml_exp_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a) {
     return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);
+}
+
+// ggml_reglu
+
+struct ggml_tensor * ggml_reglu(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    GGML_ASSERT(ggml_is_contiguous_1(a));
+
+    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0] / 2, a->ne[1]);
+
+    ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_REGLU);
+
+    result->op     = GGML_OP_UNARY;
+    result->src[0] = a;
+
+    return result;
+}
+
+// ggml_geglu
+
+struct ggml_tensor * ggml_geglu(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    GGML_ASSERT(ggml_is_contiguous_1(a));
+
+    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0] / 2, a->ne[1]);
+
+    ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_GEGLU);
+
+    result->op     = GGML_OP_UNARY;
+    result->src[0] = a;
+
+    return result;
+}
+
+// ggml_swiglu
+
+struct ggml_tensor * ggml_swiglu(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    GGML_ASSERT(ggml_is_contiguous_1(a));
+
+    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0] / 2, a->ne[1]);
+
+    ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_SWIGLU);
+
+    result->op     = GGML_OP_UNARY;
+    result->src[0] = a;
+
+    return result;
 }
 
 // ggml_norm
