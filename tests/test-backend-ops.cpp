@@ -1072,7 +1072,16 @@ struct test_unary : public test_case {
             ggml_set_name(a, "a");
         }
 
-        ggml_tensor * out = ggml_unary(ctx, a, op);
+        ggml_tensor * out;
+        if (op == GGML_UNARY_OP_REGLU) {
+            out = ggml_reglu(ctx, a);
+        } else if (op == GGML_UNARY_OP_GEGLU) {
+            out = ggml_geglu(ctx, a);
+        } else if (op == GGML_UNARY_OP_SWIGLU) {
+            out = ggml_swiglu(ctx, a);
+        } else {
+            out = ggml_unary(ctx, a, op);
+        }
         ggml_set_name(out, "out");
 
         return out;
