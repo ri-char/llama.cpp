@@ -2626,7 +2626,8 @@ struct ggml_tensor * ggml_reglu(
         struct ggml_tensor  * a) {
     GGML_ASSERT(ggml_is_contiguous_1(a));
 
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0] / 2, a->ne[1]);
+    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
+    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, ne, NULL, 0);
 
     ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_REGLU);
 
@@ -2643,7 +2644,8 @@ struct ggml_tensor * ggml_geglu(
         struct ggml_tensor  * a) {
     GGML_ASSERT(ggml_is_contiguous_1(a));
 
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0] / 2, a->ne[1]);
+    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
+    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, ne, NULL, 0);
 
     ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_GEGLU);
 
@@ -2660,7 +2662,8 @@ struct ggml_tensor * ggml_swiglu(
         struct ggml_tensor  * a) {
     GGML_ASSERT(ggml_is_contiguous_1(a));
 
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0] / 2, a->ne[1]);
+    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
+    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, ne, NULL, 0);
 
     ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_SWIGLU);
 
