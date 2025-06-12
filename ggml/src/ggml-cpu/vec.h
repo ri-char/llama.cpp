@@ -945,7 +945,7 @@ inline static void ggml_vec_geglu_f16(const int n, ggml_fp16_t * y, const ggml_f
     const uint16_t * i16 = (const uint16_t *) x;
     for (int i = 0; i < n; ++i) {
         float g = GGML_FP16_TO_FP32(x[i + n]);
-        y[i] = ggml_table_gelu_f16[i16[i]] * g;
+        y[i] = GGML_FP32_TO_FP16(GGML_FP16_TO_FP32(ggml_table_gelu_f16[i16[i]]) * g);
     }
 }
 
