@@ -200,7 +200,7 @@ void ggml_cuda_op_log(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
 
 template <float (*op)(float), typename T>
 static __global__ void unary_gated_op_kernel(const T * x, T * dst, const int64_t k, const int64_t n, const int64_t o) {
-    const int64_t i = blockDim.x*blockIdx.x + threadIdx.x;
+    const int64_t i = int64_t(blockDim.x)*blockIdx.x + threadIdx.x;
 
     if (i >= k) {
         return;
