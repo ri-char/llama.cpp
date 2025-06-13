@@ -206,7 +206,7 @@ static __global__ void unary_gated_op_kernel(const T * x, const T * g, T * dst, 
         return;
     }
 
-    // perform base op on first half of row and multiply with gate in second half
+    // perform base op on half of the row and multiply with gate in other half
     const int64_t j = (i / n) * o + (i % n);
     dst[i] = (T)(op((float)x[j]) * (float)g[j]);
 }
