@@ -989,9 +989,11 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "CROSS_ENTROPY_LOSS",
     "CROSS_ENTROPY_LOSS_BACK",
     "OPT_STEP_ADAMW",
+
+    "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 82, "GGML_OP_COUNT != 82");
+static_assert(GGML_OP_COUNT == 83, "GGML_OP_COUNT != 83");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1084,9 +1086,11 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "cross_entropy_loss(x,y)",
     "cross_entropy_loss_back(x,y)",
     "adamw(x)",
+
+    "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 82, "GGML_OP_COUNT != 82");
+static_assert(GGML_OP_COUNT == 83, "GGML_OP_COUNT != 83");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -1107,12 +1111,18 @@ static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
     "HARDSIGMOID",
     "EXP",
     "GELU_ERF",
+};
+
+static_assert(GGML_UNARY_OP_COUNT == 15, "GGML_UNARY_OP_COUNT != 15");
+
+
+static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
     "REGLU",
     "GEGLU",
     "SWIGLU",
 };
 
-static_assert(GGML_UNARY_OP_COUNT == 18, "GGML_UNARY_OP_COUNT != 18");
+static_assert(GGML_GLU_OP_COUNT == 3, "GGML_GLU_OP_COUNT != 3");
 
 
 static_assert(sizeof(struct ggml_object)%GGML_MEM_ALIGN == 0, "ggml_object size must be a multiple of GGML_MEM_ALIGN");
@@ -1217,10 +1227,18 @@ const char * ggml_unary_op_name(enum ggml_unary_op op) {
     return GGML_UNARY_OP_NAME[op];
 }
 
+const char * ggml_glu_op_name(enum ggml_glu_op op) {
+    return GGML_GLU_OP_NAME[op];
+}
+
 const char * ggml_op_desc(const struct ggml_tensor * t) {
     if (t->op == GGML_OP_UNARY) {
         enum ggml_unary_op uop = ggml_get_unary_op(t);
         return ggml_unary_op_name(uop);
+    }
+    if (t->op == GGML_OP_GLU) {
+        enum ggml_glu_op gop = ggml_get_glu_op(t);
+        return ggml_glu_op_name(gop);
     }
     return ggml_op_name(t->op);
 }
@@ -1738,6 +1756,11 @@ float * ggml_get_data_f32(const struct ggml_tensor * tensor) {
 enum ggml_unary_op ggml_get_unary_op(const struct ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_UNARY);
     return (enum ggml_unary_op) ggml_get_op_params_i32(tensor, 0);
+}
+
+enum ggml_glu_op ggml_get_glu_op(const struct ggml_tensor * tensor) {
+    GGML_ASSERT(tensor->op == GGML_OP_GLU);
+    return (enum ggml_glu_op) ggml_get_op_params_i32(tensor, 0);
 }
 
 const char * ggml_get_name(const struct ggml_tensor * tensor) {
@@ -2619,22 +2642,31 @@ struct ggml_tensor * ggml_exp_inplace(
     return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);
 }
 
-// ggml_reglu
+// ggml_glu
 
-struct ggml_tensor * ggml_reglu(
+struct ggml_tensor * ggml_glu(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a,
+        enum ggml_glu_op      op) {
     GGML_ASSERT(ggml_is_contiguous_1(a));
 
     int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
     struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, ne, NULL, 0);
 
-    ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_REGLU);
+    ggml_set_op_params_i32(result, 0, (int32_t) op);
 
-    result->op     = GGML_OP_UNARY;
+    result->op     = GGML_OP_GLU;
     result->src[0] = a;
 
     return result;
+}
+
+// ggml_reglu
+
+struct ggml_tensor * ggml_reglu(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    return ggml_glu(ctx, a, GGML_GLU_OP_REGLU);
 }
 
 // ggml_geglu
@@ -2642,17 +2674,7 @@ struct ggml_tensor * ggml_reglu(
 struct ggml_tensor * ggml_geglu(
         struct ggml_context * ctx,
         struct ggml_tensor  * a) {
-    GGML_ASSERT(ggml_is_contiguous_1(a));
-
-    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, ne, NULL, 0);
-
-    ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_GEGLU);
-
-    result->op     = GGML_OP_UNARY;
-    result->src[0] = a;
-
-    return result;
+    return ggml_glu(ctx, a, GGML_GLU_OP_GEGLU);
 }
 
 // ggml_swiglu
@@ -2660,17 +2682,7 @@ struct ggml_tensor * ggml_geglu(
 struct ggml_tensor * ggml_swiglu(
         struct ggml_context * ctx,
         struct ggml_tensor  * a) {
-    GGML_ASSERT(ggml_is_contiguous_1(a));
-
-    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, ne, NULL, 0);
-
-    ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_SWIGLU);
-
-    result->op     = GGML_OP_UNARY;
-    result->src[0] = a;
-
-    return result;
+    return ggml_glu(ctx, a, GGML_GLU_OP_SWIGLU);
 }
 
 // ggml_norm

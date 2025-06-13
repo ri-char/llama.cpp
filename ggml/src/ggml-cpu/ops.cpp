@@ -8241,15 +8241,31 @@ void ggml_compute_forward_unary(
             {
                 ggml_compute_forward_exp(params, dst);
             } break;
-        case GGML_UNARY_OP_REGLU:
+        default:
+            {
+                GGML_ABORT("fatal error");
+            }
+    }
+}
+
+//ggml_compute_forward_glu
+
+void ggml_compute_forward_glu(
+        const ggml_compute_params * params,
+        ggml_tensor * dst) {
+
+    const ggml_glu_op op = ggml_get_glu_op(dst);
+
+    switch (op) {
+        case GGML_GLU_OP_REGLU:
             {
                 ggml_compute_forward_reglu(params, dst);
             } break;
-        case GGML_UNARY_OP_GEGLU:
+        case GGML_GLU_OP_GEGLU:
             {
                 ggml_compute_forward_geglu(params, dst);
             } break;
-        case GGML_UNARY_OP_SWIGLU:
+        case GGML_GLU_OP_SWIGLU:
             {
                 ggml_compute_forward_swiglu(params, dst);
             } break;

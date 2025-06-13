@@ -2216,13 +2216,19 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
                 case GGML_UNARY_OP_EXP:
                     ggml_cuda_op_exp(ctx, dst);
                     break;
-                case GGML_UNARY_OP_REGLU:
+                default:
+                    return false;
+            }
+            break;
+        case GGML_OP_GLU:
+            switch (ggml_get_glu_op(dst)) {
+                case GGML_GLU_OP_REGLU:
                     ggml_cuda_op_reglu(ctx, dst);
                     break;
-                case GGML_UNARY_OP_GEGLU:
+                case GGML_GLU_OP_GEGLU:
                     ggml_cuda_op_geglu(ctx, dst);
                     break;
-                case GGML_UNARY_OP_SWIGLU:
+                case GGML_GLU_OP_SWIGLU:
                     ggml_cuda_op_swiglu(ctx, dst);
                     break;
                 default:
@@ -2996,9 +3002,15 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
                 case GGML_UNARY_OP_TANH:
                 case GGML_UNARY_OP_EXP:
                     return ggml_is_contiguous(op->src[0]);
-                case GGML_UNARY_OP_REGLU:
-                case GGML_UNARY_OP_GEGLU:
-                case GGML_UNARY_OP_SWIGLU:
+                default:
+                    return false;
+            }
+            break;
+        case GGML_OP_GLU:
+            switch (ggml_get_glu_op(op)) {
+                case GGML_GLU_OP_REGLU:
+                case GGML_GLU_OP_GEGLU:
+                case GGML_GLU_OP_SWIGLU:
                     return ggml_is_contiguous_1(op->src[0]);
                 default:
                     return false;
