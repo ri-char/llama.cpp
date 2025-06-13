@@ -2647,13 +2647,15 @@ struct ggml_tensor * ggml_exp_inplace(
 struct ggml_tensor * ggml_glu(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        enum ggml_glu_op      op) {
+        enum ggml_glu_op      op,
+        bool                  swapped) {
     GGML_ASSERT(ggml_is_contiguous_1(a));
 
     int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
     struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, ne, NULL, 0);
 
     ggml_set_op_params_i32(result, 0, (int32_t) op);
+    ggml_set_op_params_i32(result, 1, (int32_t) swapped);
 
     result->op     = GGML_OP_GLU;
     result->src[0] = a;
@@ -2666,7 +2668,13 @@ struct ggml_tensor * ggml_glu(
 struct ggml_tensor * ggml_reglu(
         struct ggml_context * ctx,
         struct ggml_tensor  * a) {
-    return ggml_glu(ctx, a, GGML_GLU_OP_REGLU);
+    return ggml_glu(ctx, a, GGML_GLU_OP_REGLU, false);
+}
+
+struct ggml_tensor * ggml_reglu_swapped(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    return ggml_glu(ctx, a, GGML_GLU_OP_REGLU, true);
 }
 
 // ggml_geglu
@@ -2674,7 +2682,13 @@ struct ggml_tensor * ggml_reglu(
 struct ggml_tensor * ggml_geglu(
         struct ggml_context * ctx,
         struct ggml_tensor  * a) {
-    return ggml_glu(ctx, a, GGML_GLU_OP_GEGLU);
+    return ggml_glu(ctx, a, GGML_GLU_OP_GEGLU, false);
+}
+
+struct ggml_tensor * ggml_geglu_swapped(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    return ggml_glu(ctx, a, GGML_GLU_OP_GEGLU, true);
 }
 
 // ggml_swiglu
@@ -2682,7 +2696,13 @@ struct ggml_tensor * ggml_geglu(
 struct ggml_tensor * ggml_swiglu(
         struct ggml_context * ctx,
         struct ggml_tensor  * a) {
-    return ggml_glu(ctx, a, GGML_GLU_OP_SWIGLU);
+    return ggml_glu(ctx, a, GGML_GLU_OP_SWIGLU, false);
+}
+
+struct ggml_tensor * ggml_swiglu_swapped(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    return ggml_glu(ctx, a, GGML_GLU_OP_SWIGLU, true);
 }
 
 // ggml_norm

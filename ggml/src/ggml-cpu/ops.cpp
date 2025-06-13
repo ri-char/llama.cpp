@@ -3214,6 +3214,8 @@ static void ggml_compute_forward_reglu_f32(
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
+    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
 
@@ -3224,7 +3226,8 @@ static void ggml_compute_forward_reglu_f32(
     for (int i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_reglu_f32(nc,
                 (float *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (float *) ((char *) src0->data + i1*(src0->nb[1])));
+                (float *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? nc : 0),
+                (float *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? 0 : nc));
 
 #ifndef NDEBUG
         for (int k = 0; k < nc; k++) {
@@ -3255,6 +3258,8 @@ static void ggml_compute_forward_reglu_f16(
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
+    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
 
@@ -3265,7 +3270,8 @@ static void ggml_compute_forward_reglu_f16(
     for (int i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_reglu_f16(nc,
                 (ggml_fp16_t *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])));
+                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? nc : 0),
+                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? 0 : nc));
 
 #ifndef NDEBUG
         for (int k = 0; k < nc; k++) {
@@ -3321,6 +3327,8 @@ static void ggml_compute_forward_geglu_f32(
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
+    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
 
@@ -3331,7 +3339,8 @@ static void ggml_compute_forward_geglu_f32(
     for (int i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_geglu_f32(nc,
                 (float *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (float *) ((char *) src0->data + i1*(src0->nb[1])));
+                (float *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? nc : 0),
+                (float *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? 0 : nc));
 
 #ifndef NDEBUG
         for (int k = 0; k < nc; k++) {
@@ -3362,6 +3371,8 @@ static void ggml_compute_forward_geglu_f16(
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
+    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
 
@@ -3372,7 +3383,8 @@ static void ggml_compute_forward_geglu_f16(
     for (int i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_geglu_f16(nc,
                 (ggml_fp16_t *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])));
+                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? nc : 0),
+                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? 0 : nc));
 
 #ifndef NDEBUG
         for (int k = 0; k < nc; k++) {
@@ -3428,6 +3440,8 @@ static void ggml_compute_forward_swiglu_f32(
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
+    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
 
@@ -3438,7 +3452,8 @@ static void ggml_compute_forward_swiglu_f32(
     for (int i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_swiglu_f32(nc,
                 (float *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (float *) ((char *) src0->data + i1*(src0->nb[1])));
+                (float *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? nc : 0),
+                (float *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? 0 : nc));
 
 #ifndef NDEBUG
         for (int k = 0; k < nc; k++) {
@@ -3469,6 +3484,8 @@ static void ggml_compute_forward_swiglu_f16(
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
+    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
 
@@ -3479,7 +3496,8 @@ static void ggml_compute_forward_swiglu_f16(
     for (int i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_swiglu_f16(nc,
                 (ggml_fp16_t *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])));
+                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? nc : 0),
+                (ggml_fp16_t *) ((char *) src0->data + i1*(src0->nb[1])) + (swapped ? 0 : nc));
 
 #ifndef NDEBUG
         for (int k = 0; k < nc; k++) {

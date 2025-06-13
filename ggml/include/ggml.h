@@ -1100,12 +1100,18 @@ extern "C" {
     // gated linear unit ops
     // A: n columns, r rows,
     // result is n / 2 columns, r rows,
+    // expects gate in second half of row, unless swapped is true
     GGML_API struct ggml_tensor * ggml_glu(
             struct ggml_context * ctx,
              struct ggml_tensor * a,
-             enum ggml_glu_op op);
+             enum ggml_glu_op     op,
+             bool                 swapped);
 
     GGML_API struct ggml_tensor * ggml_reglu(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+
+    GGML_API struct ggml_tensor * ggml_reglu_swapped(
             struct ggml_context * ctx,
             struct ggml_tensor  * a);
 
@@ -1113,7 +1119,15 @@ extern "C" {
             struct ggml_context * ctx,
             struct ggml_tensor  * a);
 
+    GGML_API struct ggml_tensor * ggml_geglu_swapped(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+
     GGML_API struct ggml_tensor * ggml_swiglu(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+
+    GGML_API struct ggml_tensor * ggml_swiglu_swapped(
             struct ggml_context * ctx,
             struct ggml_tensor  * a);
 
