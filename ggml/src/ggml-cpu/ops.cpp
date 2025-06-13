@@ -3211,8 +3211,8 @@ static void ggml_compute_forward_reglu_f32(
     const int nc = src0->ne[0] / 2;
     const int nr = ggml_nrows(src0);
 
-    GGML_ASSERT(dst->ne[0] >= nc);
-    GGML_ASSERT(ggml_nrows(dst) >= nr);
+    GGML_ASSERT(dst->ne[0] == nc);
+    GGML_ASSERT(ggml_nrows(dst) == nr);
 
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
@@ -3252,8 +3252,8 @@ static void ggml_compute_forward_reglu_f16(
     const int nc = src0->ne[0] / 2;
     const int nr = ggml_nrows(src0);
 
-    GGML_ASSERT(dst->ne[0] >= nc);
-    GGML_ASSERT(ggml_nrows(dst) >= nr);
+    GGML_ASSERT(dst->ne[0] == nc);
+    GGML_ASSERT(ggml_nrows(dst) == nr);
 
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
@@ -3318,8 +3318,8 @@ static void ggml_compute_forward_geglu_f32(
     const int nc = src0->ne[0] / 2;
     const int nr = ggml_nrows(src0);
 
-    GGML_ASSERT(dst->ne[0] >= nc);
-    GGML_ASSERT(ggml_nrows(dst) >= nr);
+    GGML_ASSERT(dst->ne[0] == nc);
+    GGML_ASSERT(ggml_nrows(dst) == nr);
 
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
@@ -3359,8 +3359,8 @@ static void ggml_compute_forward_geglu_f16(
     const int nc = src0->ne[0] / 2;
     const int nr = ggml_nrows(src0);
 
-    GGML_ASSERT(dst->ne[0] >= nc);
-    GGML_ASSERT(ggml_nrows(dst) >= nr);
+    GGML_ASSERT(dst->ne[0] == nc);
+    GGML_ASSERT(ggml_nrows(dst) == nr);
 
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
@@ -3425,8 +3425,8 @@ static void ggml_compute_forward_swiglu_f32(
     const int nc = src0->ne[0] / 2;
     const int nr = ggml_nrows(src0);
 
-    GGML_ASSERT(dst->ne[0] >= nc);
-    GGML_ASSERT(ggml_nrows(dst) >= nr);
+    GGML_ASSERT(dst->ne[0] == nc);
+    GGML_ASSERT(ggml_nrows(dst) == nr);
 
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
@@ -3466,8 +3466,8 @@ static void ggml_compute_forward_swiglu_f16(
     const int nc = src0->ne[0] / 2;
     const int nr = ggml_nrows(src0);
 
-    GGML_ASSERT(dst->ne[0] >= nc);
-    GGML_ASSERT(ggml_nrows(dst) >= nr);
+    GGML_ASSERT(dst->ne[0] == nc);
+    GGML_ASSERT(ggml_nrows(dst) == nr);
 
     // rows per thread
     const int dr = (nr + nth - 1)/nth;
