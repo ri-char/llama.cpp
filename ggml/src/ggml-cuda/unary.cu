@@ -213,8 +213,8 @@ static __global__ void unary_gated_op_kernel(const T * x, T * dst, const int k, 
 
 template <float (*op)(float), typename T>
 static void unary_gated_cuda(const T * x, T * dst, const int k, const int n, const int o, cudaStream_t stream) {
-    const int num_blocks = (k + CUDA_NEG_BLOCK_SIZE - 1) / CUDA_NEG_BLOCK_SIZE;
-    unary_gated_op_kernel<op><<<num_blocks, CUDA_NEG_BLOCK_SIZE, 0, stream>>>(x, dst, k, n, o);
+    const int num_blocks = (k + CUDA_GLU_BLOCK_SIZE - 1) / CUDA_GLU_BLOCK_SIZE;
+    unary_gated_op_kernel<op><<<num_blocks, CUDA_GLU_BLOCK_SIZE, 0, stream>>>(x, dst, k, n, o);
 }
 
 template <float (*op)(float)>
