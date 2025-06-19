@@ -142,14 +142,14 @@ int main(int argc, char ** argv) {
     for (const auto & prompt : prompts) {
         std::vector<llama_token> inp;
 
-        // split classification sequences and insert expected separator tokens
+        // split classification pairs and insert expected separator tokens
         if (pooling_type == LLAMA_POOLING_TYPE_RANK && prompt.find(params.cls_sep) != std::string::npos) {
-            std::vector<std::string> sequences = split_lines(prompt, params.cls_sep);
+            std::vector<std::string> pairs = split_lines(prompt, params.cls_sep);
             std::string final_prompt;
 
-            for (size_t i = 0; i < sequences.size(); i++) {
-                final_prompt += sequences[i];
-                if (i != sequences.size() - 1) {
+            for (size_t i = 0; i < pairs.size(); i++) {
+                final_prompt += pairs[i];
+                if (i != pairs.size() - 1) {
                     if (!added_eos_token.empty()) {
                         final_prompt += added_eos_token;
                     }
