@@ -276,12 +276,12 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vint8m1_t v0l = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vand_vx_u8m1(v0, 0x0F, vl));
         vint8m1_t v0h = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vsrl_vx_u8m1(v0, 4, vl));
         vint8m2_t v0c;
-        if (vlenb == 16) {
+        //if (vlenb == 16) {
             v0c = __riscv_vcreate_v_i8m1_i8m2(v0l, v0h);
-        } else {
-            v0l = __riscv_vslideup_vx_i8m1(v0l, v0h, 16, 32);
-            v0c = __riscv_vlmul_ext_v_i8m1_i8m2(v0l);
-        }
+        //} else {
+        //    v0l = __riscv_vslideup_vx_i8m1(v0l, v0h, 16, 32);
+        //    v0c = __riscv_vlmul_ext_v_i8m1_i8m2(v0l);
+        //}
 
         vl = qk;
         vbool4_t qh = __riscv_vlm_v_b4(x[ib].qh, vl);
@@ -350,12 +350,12 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vint8m1_t v0l = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vand_vx_u8m1(v0, 0x0F, vl));
         vint8m1_t v0h = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vsrl_vx_u8m1(v0, 4, vl));
         vint8m2_t v0c;
-        if (vlenb == 16) {
+        //if (vlenb == 16) {
             v0c = __riscv_vcreate_v_i8m1_i8m2(v0l, v0h);
-        } else {
-            v0l = __riscv_vslideup_vx_i8m1(v0l, v0h, 16, 32);
-            v0c = __riscv_vlmul_ext_v_i8m1_i8m2(v0l);
-        }
+        //} else {
+        //    v0l = __riscv_vslideup_vx_i8m1(v0l, v0h, 16, 32);
+        //    v0c = __riscv_vlmul_ext_v_i8m1_i8m2(v0l);
+        //}
 
         vl = qk;
         vbool4_t qh = __riscv_vlm_v_b4(x[ib].qh, vl);
@@ -471,17 +471,17 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         int vsums;
         int tmp;
         __asm__ __volatile__(
-            "th.vsetvli zero, %[vl16], e8, m1\n\t"
+            "th.vsetvli zero, %[vl16], e8, m1, ta, ma\n\t"
             "th.vmv.v.x v8, zero\n\t"
             "th.vlb.v v1, (%[sc])\n\t"
             "th.vand.vi v0, v1, 0xF\n\t"
             "th.vsrl.vi v1, v1, 4\n\t"
             "th.vsb.v v0, (%[scale])\n\t"
             "th.vwaddu.vx v16, v1, zero\n\t"
-            "th.vsetvli zero, %[vl16], e16, m2\n\t"
+            "th.vsetvli zero, %[vl16], e16, m2, ta, ma\n\t"
             "th.vlh.v v2, (%[bsums])\n\t"
             "th.vwmul.vv v4, v16, v2\n\t"
-            "th.vsetvli zero, %[vl16], e32, m4\n\t"
+            "th.vsetvli zero, %[vl16], e32, m4, ta, ma\n\t"
             "th.vredsum.vs v8, v4, v8\n\t"
             "th.vmv.x.s %[vsums], v8"
             : [tmp] "=&r" (tmp), [vsums] "=&r" (vsums)
@@ -498,7 +498,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         for (int j = 0; j < QK_K/128; ++j) {
             __asm__ __volatile__(
-                "th.vsetvli zero, %[vl32], e8, m2\n\t"
+                "th.vsetvli zero, %[vl32], e8, m2, ta, ma\n\t"
                 "th.vlb.v v0, (%[q2])\n\t"
                 "th.vsrl.vi v2, v0, 2\n\t"
                 "th.vsrl.vi v4, v0, 4\n\t"
@@ -506,12 +506,12 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "th.vand.vi v0, v0, 0x3\n\t"
                 "th.vand.vi v2, v2, 0x3\n\t"
                 "th.vand.vi v4, v4, 0x3\n\t"
-                "th.vsetvli zero, %[vl128], e8, m8\n\t"
+                "th.vsetvli zero, %[vl128], e8, m8, ta, ma\n\t"
                 "th.vlb.v v8, (%[q8])\n\t"
-                "th.vsetvli zero, %[vl64], e8, m4\n\t"
+                "th.vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                 "th.vwmul.vv v16, v0, v8\n\t"
                 "th.vwmul.vv v24, v4, v12\n\t"
-                "th.vsetvli zero, %[vl16], e16, m2\n\t"
+                "th.vsetvli zero, %[vl16], e16, m2, ta, ma\n\t"
                 "th.vmv.v.x v0, zero\n\t"
                 "th.vwredsum.vs v10, v16, v0\n\t"
                 "th.vwredsum.vs v9, v18, v0\n\t"
@@ -522,7 +522,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "th.vwredsum.vs v13, v28, v0\n\t"
                 "th.vwredsum.vs v14, v30, v0\n\t"
                 "li %[tmp], 4\n\t"
-                "th.vsetvli zero, %[tmp], e32, m1\n\t"
+                "th.vsetvli zero, %[tmp], e32, m1, ta, ma\n\t"
                 "th.vslideup.vi v10, v9, 1\n\t"
                 "th.vslideup.vi v8, v7, 1\n\t"
                 "th.vslideup.vi v11, v12, 1\n\t"
@@ -530,7 +530,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "th.vslideup.vi v10, v8, 2\n\t"
                 "th.vslideup.vi v11, v13, 2\n\t"
                 "li %[tmp], 8\n\t"
-                "th.vsetvli zero, %[tmp], e32, m2\n\t"
+                "th.vsetvli zero, %[tmp], e32, m2, ta, ma\n\t"
                 "th.vlbu.v v12, (%[scale])\n\t"
                 "th.vmul.vv v10, v10, v12\n\t"
                 "th.vredsum.vs v0, v10, v0\n\t"
@@ -563,82 +563,91 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
     switch (vector_length) {
-    case 256:
-        for (int i = 0; i < nb; ++i) {
-            const uint8_t * q2 = x[i].qs;
-            const int8_t *  q8 = y[i].qs;
-            const uint8_t * sc = x[i].scales;
+    // 替换 ggml_vec_dot_q2_K_q8_K 函数中的 case 256:
+case 256:
+    for (int i = 0; i < nb; ++i) {
+        const uint8_t * q2 = x[i].qs;
+        const int8_t *  q8 = y[i].qs;
+        const uint8_t * sc = x[i].scales;
 
-            const float dall = y[i].d * GGML_FP16_TO_FP32(x[i].d);
-            const float dmin = -y[i].d * GGML_FP16_TO_FP32(x[i].dmin);
+        const float dall = y[i].d * GGML_FP16_TO_FP32(x[i].d);
+        const float dmin = -y[i].d * GGML_FP16_TO_FP32(x[i].dmin);
 
-            size_t vl = 16;
+        size_t vl = 16;
 
-            vuint8m1_t scales = __riscv_vle8_v_u8m1(sc, vl);
-            vuint8m1_t aux    = __riscv_vand_vx_u8m1(scales, 0x0F, vl);
+        vuint8m1_t scales = __riscv_vle8_v_u8m1(sc, vl);
+        vuint8m1_t aux    = __riscv_vand_vx_u8m1(scales, 0x0F, vl);
 
-            vint16m1_t q8sums = __riscv_vle16_v_i16m1(y[i].bsums, vl);
+        vint16m1_t q8sums = __riscv_vle16_v_i16m1(y[i].bsums, vl);
 
-            vuint8mf2_t scales_2 = __riscv_vle8_v_u8mf2(sc, vl);
-            vuint8mf2_t mins8    = __riscv_vsrl_vx_u8mf2(scales_2, 0x4, vl);
-            vint16m1_t  mins     = __riscv_vreinterpret_v_u16m1_i16m1(__riscv_vzext_vf2_u16m1(mins8, vl));
-            vint32m2_t  prod     = __riscv_vwmul_vv_i32m2(q8sums, mins, vl);
-            vint32m1_t  vsums    = __riscv_vredsum_vs_i32m2_i32m1(prod, __riscv_vmv_v_x_i32m1(0, 1), vl);
-
-            sumf += dmin * __riscv_vmv_x_s_i32m1_i32(vsums);
-
-            vl = 32;
-
-            vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
-            vuint8m1_t v_b   = __riscv_vle8_v_u8m1(temp_01, vl);
-
-            uint8_t is   = 0;
-            int     isum = 0;
-
-            for (int j = 0; j < QK_K / 128; ++j) {
-                // load Q2
-                vuint8m1_t q2_x = __riscv_vle8_v_u8m1(q2, vl);
-
-                vuint8m1_t q2_0 = __riscv_vand_vx_u8m1(q2_x, 0x03, vl);
-                vuint8m1_t q2_1 = __riscv_vand_vx_u8m1(__riscv_vsrl_vx_u8m1(q2_x, 0x2, vl), 0x03, vl);
-                vuint8m1_t q2_2 = __riscv_vand_vx_u8m1(__riscv_vsrl_vx_u8m1(q2_x, 0x4, vl), 0x03, vl);
-                vuint8m1_t q2_3 = __riscv_vand_vx_u8m1(__riscv_vsrl_vx_u8m1(q2_x, 0x6, vl), 0x03, vl);
-
-                // duplicate scale elements for product
-                vuint8m1_t sc0 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 0 + is, vl), vl);
-                vuint8m1_t sc1 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 2 + is, vl), vl);
-                vuint8m1_t sc2 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 4 + is, vl), vl);
-                vuint8m1_t sc3 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 6 + is, vl), vl);
-
-                vint16m2_t p0 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_0, sc0, vl));
-                vint16m2_t p1 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_1, sc1, vl));
-                vint16m2_t p2 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_2, sc2, vl));
-                vint16m2_t p3 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_3, sc3, vl));
-
-                // load Q8
-                vint8m1_t q8_0 = __riscv_vle8_v_i8m1(q8, vl);
-                vint8m1_t q8_1 = __riscv_vle8_v_i8m1(q8 + 32, vl);
-                vint8m1_t q8_2 = __riscv_vle8_v_i8m1(q8 + 64, vl);
-                vint8m1_t q8_3 = __riscv_vle8_v_i8m1(q8 + 96, vl);
-
-                vint32m4_t s0 = __riscv_vwmul_vv_i32m4(p0, __riscv_vwcvt_x_x_v_i16m2(q8_0, vl), vl);
-                vint32m4_t s1 = __riscv_vwmul_vv_i32m4(p1, __riscv_vwcvt_x_x_v_i16m2(q8_1, vl), vl);
-                vint32m4_t s2 = __riscv_vwmul_vv_i32m4(p2, __riscv_vwcvt_x_x_v_i16m2(q8_2, vl), vl);
-                vint32m4_t s3 = __riscv_vwmul_vv_i32m4(p3, __riscv_vwcvt_x_x_v_i16m2(q8_3, vl), vl);
-
-                vint32m1_t isum0 = __riscv_vredsum_vs_i32m4_i32m1(__riscv_vadd_vv_i32m4(s0, s1, vl), vzero, vl);
-                vint32m1_t isum1 = __riscv_vredsum_vs_i32m4_i32m1(__riscv_vadd_vv_i32m4(s2, s3, vl), isum0, vl);
-
-                isum += __riscv_vmv_x_s_i32m1_i32(isum1);
-
-                q2 += 32;
-                q8 += 128;
-                is = 8;
-            }
-
-            sumf += dall * isum;
+        // =================== 已修复的代码块开始 ===================
+        // 使用一个临时数组来避免使用分数 LMUL
+        int16_t temp_mins[16];
+        // 在C循环中计算每个scale的高4位
+        for (int j = 0; j < 16; ++j) {
+            temp_mins[j] = (sc[j] >> 4);
         }
-        break;
+        // 从临时数组加载数据到向量寄存器
+        vint16m1_t mins = __riscv_vle16_v_i16m1(temp_mins, vl);
+        // =================== 已修复的代码块结束 ===================
+
+        vint32m2_t  prod     = __riscv_vwmul_vv_i32m2(q8sums, mins, vl);
+        vint32m1_t  vsums    = __riscv_vredsum_vs_i32m2_i32m1(prod, __riscv_vmv_v_x_i32m1(0, 1), vl);
+
+        sumf += dmin * __riscv_vmv_x_s_i32m1_i32(vsums);
+
+        vl = 32;
+
+        vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
+        vuint8m1_t v_b   = __riscv_vle8_v_u8m1(temp_01, vl);
+
+        uint8_t is   = 0;
+        int     isum = 0;
+
+        for (int j = 0; j < QK_K / 128; ++j) {
+            // load Q2
+            vuint8m1_t q2_x = __riscv_vle8_v_u8m1(q2, vl);
+
+            vuint8m1_t q2_0 = __riscv_vand_vx_u8m1(q2_x, 0x03, vl);
+            vuint8m1_t q2_1 = __riscv_vand_vx_u8m1(__riscv_vsrl_vx_u8m1(q2_x, 0x2, vl), 0x03, vl);
+            vuint8m1_t q2_2 = __riscv_vand_vx_u8m1(__riscv_vsrl_vx_u8m1(q2_x, 0x4, vl), 0x03, vl);
+            vuint8m1_t q2_3 = __riscv_vand_vx_u8m1(__riscv_vsrl_vx_u8m1(q2_x, 0x6, vl), 0x03, vl);
+
+            // duplicate scale elements for product
+            vuint8m1_t sc0 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 0 + is, vl), vl);
+            vuint8m1_t sc1 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 2 + is, vl), vl);
+            vuint8m1_t sc2 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 4 + is, vl), vl);
+            vuint8m1_t sc3 = __riscv_vrgather_vv_u8m1(aux, __riscv_vadd_vx_u8m1(v_b, 6 + is, vl), vl);
+
+            vint16m2_t p0 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_0, sc0, vl));
+            vint16m2_t p1 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_1, sc1, vl));
+            vint16m2_t p2 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_2, sc2, vl));
+            vint16m2_t p3 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwmulu_vv_u16m2(q2_3, sc3, vl));
+
+            // load Q8
+            vint8m1_t q8_0 = __riscv_vle8_v_i8m1(q8, vl);
+            vint8m1_t q8_1 = __riscv_vle8_v_i8m1(q8 + 32, vl);
+            vint8m1_t q8_2 = __riscv_vle8_v_i8m1(q8 + 64, vl);
+            vint8m1_t q8_3 = __riscv_vle8_v_i8m1(q8 + 96, vl);
+
+            vint32m4_t s0 = __riscv_vwmul_vv_i32m4(p0, __riscv_vwcvt_x_x_v_i16m2(q8_0, vl), vl);
+            vint32m4_t s1 = __riscv_vwmul_vv_i32m4(p1, __riscv_vwcvt_x_x_v_i16m2(q8_1, vl), vl);
+            vint32m4_t s2 = __riscv_vwmul_vv_i32m4(p2, __riscv_vwcvt_x_x_v_i16m2(q8_2, vl), vl);
+            vint32m4_t s3 = __riscv_vwmul_vv_i32m4(p3, __riscv_vwcvt_x_x_v_i16m2(q8_3, vl), vl);
+
+            vint32m1_t isum0 = __riscv_vredsum_vs_i32m4_i32m1(__riscv_vadd_vv_i32m4(s0, s1, vl), vzero, vl);
+            vint32m1_t isum1 = __riscv_vredsum_vs_i32m4_i32m1(__riscv_vadd_vv_i32m4(s2, s3, vl), isum0, vl);
+
+            isum += __riscv_vmv_x_s_i32m1_i32(isum1);
+
+            q2 += 32;
+            q8 += 128;
+            is = 8;
+        }
+
+        sumf += dall * isum;
+    }
+    break; 
     case 128:
         for (int i = 0; i < nb; ++i) {
             const uint8_t * q2 = x[i].qs;
@@ -650,17 +659,17 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             int vsums;
             int tmp;
             __asm__ __volatile__(
-                "vsetivli zero, 16, e8, m1,ta,ma\n\t"
+                "vsetivli zero, 16, e8, m1, ta, ma\n\t"
                 "vmv.v.x v8, zero\n\t"
                 "vle8.v v1, (%[sc])\n\t"
                 "vand.vi v0, v1, 0xF\n\t"
                 "vsrl.vi v1, v1, 4\n\t"
                 "vse8.v v0, (%[scale])\n\t"
-                "vsetivli zero, 16, e16, m2,ta,ma\n\t"
+                "vsetivli zero, 16, e16, m2, ta, ma\n\t"
                 "vle16.v v2, (%[bsums])\n\t"
                 "vzext.vf2 v0, v1\n\t"
                 "vwmul.vv v4, v0, v2\n\t"
-                "vsetivli zero, 16, e32, m4,ta,ma\n\t"
+                "vsetivli zero, 16, e32, m4, ta, ma\n\t"
                 "vredsum.vs v8, v4, v8\n\t"
                 "vmv.x.s %[vsums], v8"
                 : [tmp] "=&r" (tmp), [vsums] "=&r" (vsums)
@@ -676,7 +685,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
             for (int j = 0; j < QK_K/128; ++j) {
                 __asm__ __volatile__(
-                    "vsetvli zero, %[vl32], e8, m2\n\t"
+                    "vsetvli zero, %[vl32], e8, m2, ta, ma\n\t"
                     "vle8.v v0, (%[q2])\n\t"
                     "vsrl.vi v2, v0, 2\n\t"
                     "vsrl.vi v4, v0, 4\n\t"
@@ -684,12 +693,12 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                     "vand.vi v0, v0, 0x3\n\t"
                     "vand.vi v2, v2, 0x3\n\t"
                     "vand.vi v4, v4, 0x3\n\t"
-                    "vsetvli zero, %[vl128], e8, m8\n\t"
+                    "vsetvli zero, %[vl128], e8, m8, ta, ma\n\t"
                     "vle8.v v8, (%[q8])\n\t"
-                    "vsetvli zero, %[vl64], e8, m4\n\t"
+                    "vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                     "vwmul.vv v16, v0, v8\n\t"
                     "vwmul.vv v24, v4, v12\n\t"
-                    "vsetivli zero, 16, e16, m2,ta,ma\n\t"
+                    "vsetivli zero, 16, e16, m2, ta, ma\n\t"
                     "vmv.v.x v0, zero\n\t"
                     "vwredsum.vs v10, v16, v0\n\t"
                     "vwredsum.vs v9, v18, v0\n\t"
@@ -699,14 +708,14 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                     "vwredsum.vs v12, v26, v0\n\t"
                     "vwredsum.vs v13, v28, v0\n\t"
                     "vwredsum.vs v14, v30, v0\n\t"
-                    "vsetivli zero, 4, e32, m1,ta,ma\n\t"
+                    "vsetivli zero, 4, e32, m1, ta, ma\n\t"
                     "vslideup.vi v10, v9, 1\n\t"
                     "vslideup.vi v8, v7, 1\n\t"
                     "vslideup.vi v11, v12, 1\n\t"
                     "vslideup.vi v13, v14, 1\n\t"
                     "vslideup.vi v10, v8, 2\n\t"
                     "vslideup.vi v11, v13, 2\n\t"
-                    "vsetivli zero, 8, e32, m2,ta,ma\n\t"
+                    "vsetivli zero, 8, e32, m2, ta, ma\n\t"
                     "vle8.v v15, (%[scale])\n\t"
                     "vzext.vf4 v12, v15\n\t"
                     "vmul.vv v10, v10, v12\n\t"
@@ -808,17 +817,17 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         int tmp;
         __asm__ __volatile__(
             "li %[tmp], 12\n\t"
-            "th.vsetvli zero, %[tmp], e8, m1\n\t"
+            "th.vsetvli zero, %[tmp], e8, m1, ta, ma\n\t"
             "th.vlb.v v0, (%[s6b])\n\t"
             "th.vmv.v.v v2, v0\n\t"
             "li %[tmp], 2\n\t"
-            "th.vsetvli zero, %[tmp], e64, m1\n\t"
+            "th.vsetvli zero, %[tmp], e64, m1, ta, ma\n\t"
             "th.vmv.v.x v9, %[sh]\n\t"\
             "th.vslidedown.vi v1, v0, 1\n\t"
             "th.vslide1up.vx v8, v9, zero\n\t" // {0, 0, 4, 4}
             "th.vslideup.vi v0, v2, 1\n\t" // {aux[0], aux[1], aux[0], aux[1]}
             "li %[tmp], 4\n\t"
-            "th.vsetvli zero, %[tmp], e32, m1\n\t"
+            "th.vsetvli zero, %[tmp], e32, m1, ta, ma\n\t"
             "th.vid.v v9\n\t"
             "th.vmv.x.s %[tmp], v1\n\t"
             "th.vsll.vi v9, v9, 1\n\t" // {0, 2, 4, 6}
@@ -830,7 +839,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             "th.vsll.vi v6, v5, 4\n\t"
             "th.vor.vv v7, v6, v3\n\t"
             "li %[tmp], 16\n\t"
-            "th.vsetvli zero, %[tmp], e8, m1\n\t"
+            "th.vsetvli zero, %[tmp], e8, m1, ta, ma\n\t"
             "th.vsub.vx v0, v7, %[c]\n\t"
             "th.vsb.v v0, (%[scale])"
             : [tmp] "=&r" (tmp)
@@ -848,7 +857,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         for (int j = 0; j < QK_K; j += 128) {
             __asm__ __volatile__(
                 // fixme: use v0p7 mask layout directly
-                "th.vsetvli zero, %[vl32], e8, m2\n\t"
+                "th.vsetvli zero, %[vl32], e8, m2, ta, ma\n\t"
                 "th.vlb.v v8, (%[q3])\n\t"
                 "th.vsrl.vi v10, v8, 2\n\t"
                 "th.vsrl.vi v12, v8, 4\n\t"
@@ -873,13 +882,13 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "slli %[m], %[m], 1\n\t"
                 "th.vmseq.vx v0, v4, zero\n\t"
                 "th.vadd.vi v14, v14, -4, v0.t\n\t"
-                "th.vsetvli zero, %[vl128], e8, m8\n\t"
+                "th.vsetvli zero, %[vl128], e8, m8, ta, ma\n\t"
                 "th.vlb.v v0, (%[q8])\n\t"
-                "th.vsetvli zero, %[vl64], e8, m4\n\t"
+                "th.vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                 "th.vwmul.vv v16, v0, v8\n\t"
                 "th.vwmul.vv v24, v4, v12\n\t"
                 "li %[tmp], 16\n\t"
-                "th.vsetvli zero, %[tmp], e16, m2\n\t"
+                "th.vsetvli zero, %[tmp], e16, m2, ta, ma\n\t"
                 "th.vmv.v.x v0, zero\n\t"
                 "th.vwredsum.vs v10, v16, v0\n\t"
                 "th.vwredsum.vs v9, v18, v0\n\t"
@@ -890,7 +899,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "th.vwredsum.vs v13, v28, v0\n\t"
                 "th.vwredsum.vs v14, v30, v0\n\t"
                 "li %[tmp], 4\n\t"
-                "th.vsetvli zero, %[tmp], e32, m1\n\t"
+                "th.vsetvli zero, %[tmp], e32, m1, ta, ma\n\t"
                 "th.vslideup.vi v10, v9, 1\n\t"
                 "th.vslideup.vi v8, v7, 1\n\t"
                 "th.vslideup.vi v11, v12, 1\n\t"
@@ -898,7 +907,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "th.vslideup.vi v10, v8, 2\n\t"
                 "th.vslideup.vi v11, v13, 2\n\t"
                 "li %[tmp], 8\n\t"
-                "th.vsetvli zero, %[tmp], e32, m2\n\t"
+                "th.vsetvli zero, %[tmp], e32, m2, ta, ma\n\t"
                 "th.vlb.v v12, (%[scale])\n\t"
                 "th.vmul.vv v10, v10, v12\n\t"
                 "th.vredsum.vs v0, v10, v0\n\t"
@@ -1032,15 +1041,15 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             int8_t * scale = (int8_t *)utmp;
             int tmp;
             __asm__ __volatile__(
-                "vsetivli zero, 12, e8, m1,ta,ma\n\t"
+                "vsetivli zero, 12, e8, m1, ta, ma\n\t"
                 "vle8.v v0, (%[s6b])\n\t"
                 "vmv1r.v v2, v0\n\t"
-                "vsetivli zero, 2, e64, m1,ta,ma\n\t"
+                "vsetivli zero, 2, e64, m1, ta, ma\n\t"
                 "vmv.v.x v9, %[sh]\n\t"\
                 "vslidedown.vi v1, v0, 1\n\t"
                 "vslide1up.vx v8, v9, zero\n\t" // {0, 0, 4, 4}
                 "vslideup.vi v0, v2, 1\n\t" // {aux[0], aux[1], aux[0], aux[1]}
-                "vsetivli zero, 4, e32, m1,ta,ma\n\t"
+                "vsetivli zero, 4, e32, m1, ta, ma\n\t"
                 "vid.v v9\n\t"
                 "vmv.x.s %[tmp], v1\n\t"
                 "vsll.vi v9, v9, 1\n\t" // {0, 2, 4, 6}
@@ -1051,7 +1060,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "vand.vx v3, v2, %[kmask2]\n\t"
                 "vsll.vi v6, v5, 4\n\t"
                 "vor.vv v7, v6, v3\n\t"
-                "vsetivli zero, 16, e8, m1,ta,ma\n\t"
+                "vsetivli zero, 16, e8, m1, ta, ma\n\t"
                 "vsub.vx v0, v7, %[c]\n\t"
                 "vse8.v v0, (%[scale])"
                 : [tmp] "=&r" (tmp)
@@ -1068,7 +1077,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             int isum = 0;
             for (int j = 0; j < QK_K; j += 128) {
                 __asm__ __volatile__(
-                    "vsetvli zero, %[vl32], e8, m2, ta, mu\n\t"
+                    "vsetvli zero, %[vl32], e8, m2, ta, ma\n\t"
                     "vle8.v v8, (%[q3])\n\t"
                     "vsrl.vi v10, v8, 2\n\t"
                     "vsrl.vi v12, v8, 4\n\t"
@@ -1093,12 +1102,12 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                     "slli %[m], %[m], 1\n\t"
                     "vmseq.vx v0, v4, zero\n\t"
                     "vadd.vi v14, v14, -4, v0.t\n\t"
-                    "vsetvli zero, %[vl128], e8, m8\n\t"
+                    "vsetvli zero, %[vl128], e8, m8, ta, ma\n\t"
                     "vle8.v v0, (%[q8])\n\t"
-                    "vsetvli zero, %[vl64], e8, m4\n\t"
+                    "vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                     "vwmul.vv v16, v0, v8\n\t"
                     "vwmul.vv v24, v4, v12\n\t"
-                    "vsetivli zero, 16, e16, m2,ta,ma\n\t"
+                    "vsetivli zero, 16, e16, m2, ta, ma\n\t"
                     "vmv.v.x v0, zero\n\t"
                     "vwredsum.vs v10, v16, v0\n\t"
                     "vwredsum.vs v9, v18, v0\n\t"
@@ -1108,14 +1117,14 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                     "vwredsum.vs v12, v26, v0\n\t"
                     "vwredsum.vs v13, v28, v0\n\t"
                     "vwredsum.vs v14, v30, v0\n\t"
-                    "vsetivli zero, 4, e32, m1,ta,ma\n\t"
+                    "vsetivli zero, 4, e32, m1, ta, ma\n\t"
                     "vslideup.vi v10, v9, 1\n\t"
                     "vslideup.vi v8, v7, 1\n\t"
                     "vslideup.vi v11, v12, 1\n\t"
                     "vslideup.vi v13, v14, 1\n\t"
                     "vslideup.vi v10, v8, 2\n\t"
                     "vslideup.vi v11, v13, 2\n\t"
-                    "vsetivli zero, 8, e32, m2,ta,ma\n\t"
+                    "vsetivli zero, 8, e32, m2, ta, ma\n\t"
                     "vle8.v v15, (%[scale])\n\t"
                     "vsext.vf4 v12, v15\n\t"
                     "vmul.vv v10, v10, v12\n\t"
@@ -1245,15 +1254,15 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         int tmp, tmp2, sumi;
         __asm__ __volatile__(
             "li %[t1], 12\n\t"
-            "th.vsetvli zero, %[t1], e8, m1\n\t"
+            "th.vsetvli zero, %[t1], e8, m1, ta, ma\n\t"
             "th.vlb.v v1, (%[s6b])\n\t" // {aux[0], aux[1], aux[2]}
             "li %[t1], 4\n\t"
-            "th.vsetvli zero, %[t1], e32, m1\n\t"
+            "th.vsetvli zero, %[t1], e32, m1, ta, ma\n\t"
             "th.vslidedown.vi v2, v1, 2\n\t"
             "th.vmv.v.v v3, v2\n\t"
             "th.vslideup.vi v2, v3, 1\n\t" // {aux[2], aux[2]}
             "li %[t1], 2\n\t"
-            "th.vsetvli zero, %[t1], e32, m1\n\t"
+            "th.vsetvli zero, %[t1], e32, m1, ta, ma\n\t"
             "th.vmv.v.i v4, 4\n\t"
             "th.vand.vx v8, v1, %[kmask1]\n\t"
             "th.vslide1up.vx v5, v4, zero\n\t" // {0, 4}
@@ -1267,16 +1276,16 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             "th.vor.vv v1, v6, v2\n\t"
             "th.vssw.v v8, (%[utmp]), %[t2]\n\t"
             "th.vssw.v v1, (%[t1]), %[t2]\n\t"
-            "th.vsetvli zero, zero, e32, m2\n\t" // vl == 8
+            "th.vsetvli zero, zero, e32, m2, ta, ma\n\t" // vl == 8
             "th.vlw.v v2, (%[bsums])\n\t"
-            "th.vsetvli zero, %[t2], e16, m1\n\t"
+            "th.vsetvli zero, %[t2], e16, m1, ta, ma\n\t"
             "th.vnsrl.vi v0, v2, 0\n\t"
             "th.vnsrl.vi v1, v2, 16\n\t"
             "th.vadd.vv v2, v0, v1\n\t"
             "th.vlbu.v v4, (%[mins])\n\t"
             "th.vwmul.vv v6, v4, v2\n\t"
             "th.vmv.v.x v0, zero\n\t"
-            "th.vsetvli zero, %[t2], e32, m2\n\t"
+            "th.vsetvli zero, %[t2], e32, m2, ta, ma\n\t"
             "th.vredsum.vs v0, v6, v0\n\t"
             "th.vmv.x.s %[sumi], v0"
             : [t1] "=&r" (tmp), [t2] "=&r" (tmp2), [sumi] "=&r" (sumi)
@@ -1300,27 +1309,27 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         for (int j = 0; j < QK_K/128; ++j) {
             int vl128 = 128, vl64 = 64, vl32 = 32;
             __asm__ __volatile__(
-                "th.vsetvli zero, %[vl128], e8, m8\n\t"
+                "th.vsetvli zero, %[vl128], e8, m8, ta, ma\n\t"
                 "th.vlb.v v8, (%[q8])\n\t"
-                "th.vsetvli zero, %[vl64], e8, m4\n\t"
+                "th.vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                 "th.vlb.v v0, (%[q4])\n\t"
                 "th.vsrl.vi v4, v0, 4\n\t"
                 "th.vand.vi v0, v0, 0xF\n\t"
-                "th.vsetvli zero, %[vl32], e8, m2\n\t"
+                "th.vsetvli zero, %[vl32], e8, m2, ta, ma\n\t"
                 "th.vwmul.vv v28, v6, v14\n\t"
                 "th.vwmul.vv v20, v4, v10\n\t"
                 "th.vwmul.vv v24, v2, v12\n\t"
                 "th.vwmul.vv v16, v0, v8\n\t"
                 "li %[tmp], 4\n\t"
-                "th.vsetvli zero, %[tmp], e32, m1\n\t"
+                "th.vsetvli zero, %[tmp], e32, m1, ta, ma\n\t"
                 "th.vlbu.v v1, (%[scale])\n\t"
                 "th.vmv.v.x v0, zero\n\t"
-                "th.vsetvli zero, %[vl32], e16, m4\n\t"
+                "th.vsetvli zero, %[vl32], e16, m4, ta, ma\n\t"
                 "th.vwredsum.vs v6, v24, v0\n\t"
                 "th.vwredsum.vs v7, v28, v0\n\t"
                 "th.vwredsum.vs v4, v16, v0\n\t"
                 "th.vwredsum.vs v5, v20, v0\n\t"
-                "th.vsetvli zero, %[tmp], e32, m1\n\t"
+                "th.vsetvli zero, %[tmp], e32, m1, ta, ma\n\t"
                 "th.vslideup.vi v6, v7, 1\n\t"
                 "th.vslideup.vi v4, v5, 1\n\t"
                 "th.vslideup.vi v4, v6, 2\n\t"
@@ -1356,70 +1365,88 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const int vector_length = __riscv_vlenb() * 8;
 
     switch (vector_length) {
-    case 256:
-        for (int i = 0; i < nb; ++i) {
+    // 替换 ggml_vec_dot_q4_K_q8_K 函数中的 case 256:
+case 256:
+    for (int i = 0; i < nb; ++i) {
 
-            size_t vl = 8;
+        size_t vl = 8;
 
-            const float d = y[i].d * GGML_FP16_TO_FP32(x[i].d);
-            const float dmin = y[i].d * GGML_FP16_TO_FP32(x[i].dmin);
+        const float d = y[i].d * GGML_FP16_TO_FP32(x[i].d);
+        const float dmin = y[i].d * GGML_FP16_TO_FP32(x[i].dmin);
 
-            vint16mf2_t q8sums_0 = __riscv_vlse16_v_i16mf2(y[i].bsums, 4, vl);
-            vint16mf2_t q8sums_1 = __riscv_vlse16_v_i16mf2(y[i].bsums+1, 4, vl);
-            vint16mf2_t q8sums   = __riscv_vadd_vv_i16mf2(q8sums_0, q8sums_1, vl);
+        // =================== 已修复的代码块 1/3 ===================
+        // 使用临时数组计算 q8sums 以避免分数 LMUL
+        int16_t temp_q8sums[8];
+        for (int j = 0; j < 8; ++j) {
+            temp_q8sums[j] = y[i].bsums[2*j] + y[i].bsums[2*j+1];
+        }
+        vint16m1_t q8sums = __riscv_vle16_v_i16m1(temp_q8sums, vl);
+        // =========================================================
 
-            memcpy(utmp, x[i].scales, 12);
-            utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
-            const uint32_t uaux = utmp[1] & kmask1;
-            utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
-            utmp[2] = uaux;
-            utmp[0] &= kmask1;
+        memcpy(utmp, x[i].scales, 12);
+        utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
+        const uint32_t uaux = utmp[1] & kmask1;
+        utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
+        utmp[2] = uaux;
+        utmp[0] &= kmask1;
 
-            vuint8mf4_t mins8  = __riscv_vle8_v_u8mf4(mins, vl);
-            vint16mf2_t v_mins = __riscv_vreinterpret_v_u16mf2_i16mf2(__riscv_vzext_vf2_u16mf2(mins8, vl));
-            vint32m1_t  prod   = __riscv_vwmul_vv_i32m1(q8sums, v_mins, vl);
+        // =================== 已修复的代码块 2/3 ===================
+        // 使用临时数组计算 v_mins 以避免分数 LMUL
+        int16_t temp_v_mins[8];
+        for (int j = 0; j < 8; ++j) {
+            temp_v_mins[j] = mins[j]; // mins 是 uint8_t*
+        }
+        vint16m1_t v_mins = __riscv_vle16_v_i16m1(temp_v_mins, vl);
+        // =========================================================
 
-            vint32m1_t sumi = __riscv_vredsum_vs_i32m1_i32m1(prod, __riscv_vmv_v_x_i32m1(0, 1), vl);
-            sumf -= dmin * __riscv_vmv_x_s_i32m1_i32(sumi);
+        // =================== 已修复的代码块 3/3 ===================
+        // 使用 m1 输入，宽化乘法产生 m2 输出
+        vint32m2_t  prod   = __riscv_vwmul_vv_i32m2(q8sums, v_mins, vl);
 
-            const uint8_t * GGML_RESTRICT q4 = x[i].qs;
-            const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        // 使用能处理 m2 向量的 vredsum
+        vint32m1_t sumi = __riscv_vredsum_vs_i32m2_i32m1(prod, __riscv_vmv_v_x_i32m1(0, 1), vl);
+        // =========================================================
+        
+        sumf -= dmin * __riscv_vmv_x_s_i32m1_i32(sumi);
 
-            vl = 32;
+        const uint8_t * GGML_RESTRICT q4 = x[i].qs;
+        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-            int32_t sum_1 = 0;
-            int32_t sum_2 = 0;
+        vl = 32;
 
-            vint16m1_t vzero = __riscv_vmv_v_x_i16m1(0, 1);
+        int32_t sum_1 = 0;
+        int32_t sum_2 = 0;
 
-            for (int j = 0; j < QK_K/64; ++j) {
-                // load Q4
-                vuint8m1_t q4_x = __riscv_vle8_v_u8m1(q4, vl);
+        vint16m1_t vzero = __riscv_vmv_v_x_i16m1(0, 1);
 
-                // load Q8 and multiply it with lower Q4 nibble
-                vint8m1_t  q8_0 = __riscv_vle8_v_i8m1(q8, vl);
-                vint8m1_t  q4_0 = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vand_vx_u8m1(q4_x, 0x0F, vl));
-                vint16m2_t qv_0 = __riscv_vwmul_vv_i16m2(q4_0, q8_0, vl);
-                vint16m1_t vs_0 = __riscv_vredsum_vs_i16m2_i16m1(qv_0, vzero, vl);
+        for (int j = 0; j < QK_K/64; ++j) {
+            // load Q4
+            vuint8m1_t q4_x = __riscv_vle8_v_u8m1(q4, vl);
 
-                sum_1 += __riscv_vmv_x_s_i16m1_i16(vs_0) * scales[2*j+0];
+            // load Q8 and multiply it with lower Q4 nibble
+            vint8m1_t  q8_0 = __riscv_vle8_v_i8m1(q8, vl);
+            vint8m1_t  q4_0 = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vand_vx_u8m1(q4_x, 0x0F, vl));
+            vint16m2_t qv_0 = __riscv_vwmul_vv_i16m2(q4_0, q8_0, vl);
+            vint16m1_t vs_0 = __riscv_vredsum_vs_i16m2_i16m1(qv_0, vzero, vl);
 
-                // load Q8 and multiply it with upper Q4 nibble
-                vint8m1_t  q8_1 = __riscv_vle8_v_i8m1(q8+32, vl);
-                vint8m1_t  q4_1 = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vsrl_vx_u8m1(q4_x, 0x04, vl));
-                vint16m2_t qv_1 = __riscv_vwmul_vv_i16m2(q4_1, q8_1, vl);
-                vint16m1_t vs_1 = __riscv_vredsum_vs_i16m2_i16m1(qv_1, vzero, vl);
+            sum_1 += __riscv_vmv_x_s_i16m1_i16(vs_0) * scales[2*j+0];
 
-                sum_2 += __riscv_vmv_x_s_i16m1_i16(vs_1) * scales[2*j+1];
+            // load Q8 and multiply it with upper Q4 nibble
+            vint8m1_t  q8_1 = __riscv_vle8_v_i8m1(q8+32, vl);
+            vint8m1_t  q4_1 = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vsrl_vx_u8m1(q4_x, 0x04, vl));
+            vint16m2_t qv_1 = __riscv_vwmul_vv_i16m2(q4_1, q8_1, vl);
+            vint16m1_t vs_1 = __riscv_vredsum_vs_i16m2_i16m1(qv_1, vzero, vl);
 
-                q4 += 32;    q8 += 64;
+            sum_2 += __riscv_vmv_x_s_i16m1_i16(vs_1) * scales[2*j+1];
 
-            }
-
-            sumf += d*(sum_1 + sum_2);
+            q4 += 32;    q8 += 64;
 
         }
-        break;
+
+        sumf += d*(sum_1 + sum_2);
+
+    }
+    break;
     case 128:
         for (int i = 0; i < nb; ++i) {
             const float d = y[i].d * GGML_FP16_TO_FP32(x[i].d);
@@ -1427,13 +1454,13 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
             int tmp, tmp2, sumi;
             __asm__ __volatile__(
-                "vsetivli zero, 12, e8, m1,ta,ma\n\t"
+                "vsetivli zero, 12, e8, m1, ta, ma\n\t"
                 "vle8.v v1, (%[s6b])\n\t" // {aux[0], aux[1], aux[2]}
-                "vsetivli zero, 4, e32, m1,ta,ma\n\t"
+                "vsetivli zero, 4, e32, m1, ta, ma\n\t"
                 "vslidedown.vi v2, v1, 2\n\t"
                 "vmv1r.v v3, v2\n\t"
                 "vslideup.vi v2, v3, 1\n\t" // {aux[2], aux[2]}
-                "vsetivli zero, 2, e32, m1,ta,ma\n\t"
+                "vsetivli zero, 2, e32, m1, ta, ma\n\t"
                 "vmv.v.i v4, 4\n\t"
                 "vand.vx v8, v1, %[kmask1]\n\t"
                 "vslide1up.vx v5, v4, zero\n\t" // {0, 4}
@@ -1447,7 +1474,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "vor.vv v1, v6, v2\n\t"
                 "vsse32.v v8, (%[utmp]), %[t2]\n\t"
                 "vsse32.v v1, (%[t1]), %[t2]\n\t"
-                "vsetivli zero, 8, e16, m1,ta,ma\n\t"
+                "vsetivli zero, 8, e16, m1, ta, ma\n\t"
                 "vle32.v v2, (%[bsums])\n\t"
                 "vnsrl.wi v0, v2, 0\n\t"
                 "vnsrl.wi v1, v2, 16\n\t"
@@ -1456,7 +1483,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "vzext.vf2 v4, v3\n\t"
                 "vwmul.vv v6, v4, v2\n\t"
                 "vmv.v.x v0, zero\n\t"
-                "vsetivli zero, 8, e32, m2,ta,ma\n\t"
+                "vsetivli zero, 8, e32, m2, ta, ma\n\t"
                 "vredsum.vs v0, v6, v0\n\t"
                 "vmv.x.s %[sumi], v0"
                 : [t1] "=&r" (tmp), [t2] "=&r" (tmp2), [sumi] "=&r" (sumi)
@@ -1480,27 +1507,27 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             for (int j = 0; j < QK_K/128; ++j) {
                 int vl128 = 128, vl64 = 64, vl32 = 32;
                 __asm__ __volatile__(
-                    "vsetvli zero, %[vl128], e8, m8\n\t"
+                    "vsetvli zero, %[vl128], e8, m8, ta, ma\n\t"
                     "vle8.v v8, (%[q8])\n\t"
-                    "vsetvli zero, %[vl64], e8, m4\n\t"
+                    "vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                     "vle8.v v0, (%[q4])\n\t"
                     "vsrl.vi v4, v0, 4\n\t"
                     "vand.vi v0, v0, 0xF\n\t"
-                    "vsetvli zero, %[vl32], e8, m2\n\t"
+                    "vsetvli zero, %[vl32], e8, m2, ta, ma\n\t"
                     "vwmul.vv v28, v6, v14\n\t"
                     "vwmul.vv v20, v4, v10\n\t"
                     "vwmul.vv v24, v2, v12\n\t"
                     "vwmul.vv v16, v0, v8\n\t"
-                    "vsetivli zero, 4, e32, m1,ta,ma\n\t"
+                    "vsetivli zero, 4, e32, m1, ta, ma\n\t"
                     "vle8.v v2, (%[scale])\n\t"
                     "vmv.v.x v0, zero\n\t"
                     "vzext.vf4 v1, v2\n\t"
-                    "vsetvli zero, %[vl32], e16, m4\n\t"
+                    "vsetvli zero, %[vl32], e16, m4, ta, ma\n\t"
                     "vwredsum.vs v6, v24, v0\n\t"
                     "vwredsum.vs v7, v28, v0\n\t"
                     "vwredsum.vs v4, v16, v0\n\t"
                     "vwredsum.vs v5, v20, v0\n\t"
-                    "vsetivli zero, 4, e32, m1,ta,ma\n\t"
+                    "vsetivli zero, 4, e32, m1, ta, ma\n\t"
                     "vslideup.vi v6, v7, 1\n\t"
                     "vslideup.vi v4, v5, 1\n\t"
                     "vslideup.vi v4, v6, 2\n\t"
@@ -1589,7 +1616,6 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     *s = sumf;
 #endif
 }
-
 void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
@@ -1641,8 +1667,16 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         utmp[2] = uaux;
         utmp[0] &= kmask1;
 
-        vuint8mf2_t mins8 = __riscv_vle8_v_u8mf2(mins, vl);
-        vint16m1_t v_mins = __riscv_vreinterpret_v_u16m1_i16m1(__riscv_vzext_vf2_u16m1(mins8, vl));
+        // =================== 已修复的代码块开始 ===================
+        // 使用临时数组来避免分数 LMUL
+        int16_t temp_v_mins[8];
+        for (int j = 0; j < 8; ++j) {
+            temp_v_mins[j] = mins[j];
+        }
+        // 从临时数组加载，不使用分数 LMUL
+        vint16m1_t v_mins = __riscv_vle16_v_i16m1(temp_v_mins, vl);
+        // =================== 已修复的代码块结束 ===================
+
         vint32m2_t prod = __riscv_vwmul_vv_i32m2(q8sums, v_mins, vl);
 
         vint32m1_t sumi = __riscv_vredsum_vs_i32m2_i32m1(prod, __riscv_vmv_v_x_i32m1(0, 1), vl);
@@ -1758,7 +1792,6 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     *s = sumf;
 #endif
 }
-
 void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
@@ -1791,25 +1824,25 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         for (int j = 0; j < QK_K/128; ++j) {
             __asm__ __volatile__(
-                "th.vsetvli zero, %[vl32], e8, m2\n\t" // vl == 32
+                "th.vsetvli zero, %[vl32], e8, m2, ta, ma\n\t" // vl == 32
                 "th.vlb.v v4, (%[qh])\n\t"
                 "th.vsll.vi v0, v4, 4\n\t"
                 "th.vsll.vi v2, v4, 2\n\t"
                 "th.vsrl.vi v6, v4, 2\n\t"
-                "th.vsetvli zero, %[vl64], e8, m4\n\t" // vl == 64
+                "th.vsetvli zero, %[vl64], e8, m4, ta, ma\n\t" // vl == 64
                 "th.vlb.v v8, (%[q6])\n\t"
                 "th.vsrl.vi v12, v8, 4\n\t"
                 "th.vand.vi v8, v8, 0xF\n\t"
-                "th.vsetvli zero, %[vl128], e8, m8\n\t" // vl == 128
+                "th.vsetvli zero, %[vl128], e8, m8, ta, ma\n\t" // vl == 128
                 "th.vand.vx v0, v0, %[mask]\n\t"
                 "th.vor.vv v8, v8, v0\n\t"
                 "th.vlb.v v0, (%[q8])\n\t"
                 "th.vsub.vx v8, v8, %[vl32]\n\t"
-                "th.vsetvli zero, %[vl64], e8, m4\n\t" // vl == 64
+                "th.vsetvli zero, %[vl64], e8, m4, ta, ma\n\t" // vl == 64
                 "th.vwmul.vv v16, v0, v8\n\t"
                 "th.vwmul.vv v24, v4, v12\n\t"
                 "li %[t0], 16\n\t"
-                "th.vsetvli zero, %[t0], e16, m2\n\t" // vl == 16
+                "th.vsetvli zero, %[t0], e16, m2, ta, ma\n\t" // vl == 16
                 "th.vmv.v.x v0, zero\n\t"
                 "th.vwredsum.vs v10, v16, v0\n\t"
                 "th.vwredsum.vs v9, v18, v0\n\t"
@@ -1820,7 +1853,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "th.vwredsum.vs v13, v28, v0\n\t"
                 "th.vwredsum.vs v14, v30, v0\n\t"
                 "li %[t0], 4\n\t"
-                "th.vsetvli zero, %[t0], e32, m1\n\t" // vl == 4
+                "th.vsetvli zero, %[t0], e32, m1, ta, ma\n\t" // vl == 4
                 "th.vslideup.vi v10, v9, 1\n\t"
                 "th.vslideup.vi v8, v7, 1\n\t"
                 "th.vslideup.vi v11, v12, 1\n\t"
@@ -1828,7 +1861,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 "th.vslideup.vi v10, v8, 2\n\t"
                 "th.vslideup.vi v11, v13, 2\n\t"
                 "li %[t0], 8\n\t"
-                "th.vsetvli zero, %[t0], e32, m2\n\t" // vl == 8
+                "th.vsetvli zero, %[t0], e32, m2, ta, ma\n\t" // vl == 8
                 "th.vlb.v v4, (%[scale])\n\t"
                 "th.vmul.vv v2, v4, v10\n\t"
                 "th.vredsum.vs v0, v2, v0\n\t"
@@ -1956,24 +1989,24 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
             for (int j = 0; j < QK_K/128; ++j) {
                 __asm__ __volatile__(
-                    "vsetvli zero, %[vl32], e8, m2\n\t"
+                    "vsetvli zero, %[vl32], e8, m2, ta, ma\n\t"
                     "vle8.v v4, (%[qh])\n\t"
                     "vsll.vi v0, v4, 4\n\t"
                     "vsll.vi v2, v4, 2\n\t"
                     "vsrl.vi v6, v4, 2\n\t"
-                    "vsetvli zero, %[vl64], e8, m4\n\t"
+                    "vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                     "vle8.v v8, (%[q6])\n\t"
                     "vsrl.vi v12, v8, 4\n\t"
                     "vand.vi v8, v8, 0xF\n\t"
-                    "vsetvli zero, %[vl128], e8, m8\n\t"
+                    "vsetvli zero, %[vl128], e8, m8, ta, ma\n\t"
                     "vand.vx v0, v0, %[mask]\n\t"
                     "vor.vv v8, v8, v0\n\t"
                     "vle8.v v0, (%[q8])\n\t"
                     "vsub.vx v8, v8, %[vl32]\n\t"
-                    "vsetvli zero, %[vl64], e8, m4\n\t"
+                    "vsetvli zero, %[vl64], e8, m4, ta, ma\n\t"
                     "vwmul.vv v16, v0, v8\n\t"
                     "vwmul.vv v24, v4, v12\n\t"
-                    "vsetivli zero, 16, e16, m2,ta,ma\n\t"
+                    "vsetivli zero, 16, e16, m2, ta, ma\n\t"
                     "vmv.v.x v0, zero\n\t"
                     "vwredsum.vs v10, v16, v0\n\t"
                     "vwredsum.vs v9, v18, v0\n\t"
@@ -1983,14 +2016,14 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                     "vwredsum.vs v12, v26, v0\n\t"
                     "vwredsum.vs v13, v28, v0\n\t"
                     "vwredsum.vs v14, v30, v0\n\t"
-                    "vsetivli zero, 4, e32, m1,ta,ma\n\t"
+                    "vsetivli zero, 4, e32, m1, ta, ma\n\t"
                     "vslideup.vi v10, v9, 1\n\t"
                     "vslideup.vi v8, v7, 1\n\t"
                     "vslideup.vi v11, v12, 1\n\t"
                     "vslideup.vi v13, v14, 1\n\t"
                     "vslideup.vi v10, v8, 2\n\t"
                     "vslideup.vi v11, v13, 2\n\t"
-                    "vsetivli zero, 8, e32, m2,ta,ma\n\t"
+                    "vsetivli zero, 8, e32, m2, ta, ma\n\t"
                     "vle8.v v2, (%[scale])\n\t"
                     "vsext.vf4 v4, v2\n\t"
                     "vmul.vv v2, v4, v10\n\t"
