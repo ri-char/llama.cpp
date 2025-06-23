@@ -415,6 +415,99 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #if defined(__riscv_v)
     size_t vl = qk;
 
+    vint32m1_t v_zero = __riscv_vmv_v_x_i32m1(0, vl);
+    for (; ib < (nb & ~3); ib += 4) {
+        ggml_half scale_x_y[8];
+        for(int i=0; i<4; i++){
+            scale_x_y[i]=x[ib+i].d;
+            scale_x_y[i+4]=y[ib+i].d;
+        }
+        float output;
+        __asm__ __volatile__(
+            "vsetvli zero, a0, e32, m1\n\t"
+	        "vmv.v.i v1, 0\n\t"
+            // load scale_x_y to v0
+            "vsetvli zero, %[vl8], e16, m1\n\t"
+            "vle.v v0, (%[scale_x_y])\n\t"
+            // convert f16 to f32 (v2, v3)
+            "vfwcvt.f.f.v v2, v0\n\t"
+            
+            // v0 = v1 .* v2
+            "vsetvli zero, %[vl4], e32, m1\n\t"
+            "vfmul.vv v0, v2, v3\t\n"
+
+            // load x vector group1
+            "vsetvli zero, %[vl32], e8, m2\n\t"
+            "vle.v v8, (%[x0])\n\t"
+            "addi %[x0], %[x0], %[block_q8_0_size]\n\t"
+            "vle.v v10, (%[x0])\n\t"
+            "addi %[x0], %[x0], %[block_q8_0_size]\n\t"
+            
+            // load y vector group1
+            "vle.v v12, (%[y0])\n\t"
+            "addi %[y0], %[y0], %[block_q8_0_size]\n\t"
+            "vle.v v14, (%[y0])\n\t"
+            "addi %[y0], %[y0], %[block_q8_0_size]\n\t"
+
+            // mul (v16 - v24)
+            "vsetvli zero, %[vl64], e8, m4\n\t"
+            "vwmul.vv v16, v8, v12\n\t"
+            
+            // add (v2[0], v3[0])
+            "vsetvli zero, %[vl32], e16, m4\n\t"
+            "vwredsum.vs v2, v16, v1\n\t"
+            "vwredsum.vs v3, v20, v1\n\t"
+
+            // load x vector group2
+            "vsetvli zero, %[vl32], e8, m2\n\t"
+            "vle.v v8, (%[x0])\n\t"
+            "addi %[x0], %[x0], %[block_q8_0_size]\n\t"
+            "vle.v v10, (%[x0])\n\t"
+
+            // load y vector group2
+            "vle.v v12, (%[y0])\n\t"
+            "addi %[y0], %[y0], %[block_q8_0_size]\n\t"
+            "vle.v v14, (%[y0])\n\t"
+
+            // mul(v16 - v24)
+            "vsetvli zero, %[vl64], e8, m4\n\t"
+            "vwmul.vv v16, v8, v12\n\t"
+
+            // add (v4[0], v5[0])
+            "vsetvli zero, %[vl32], e16, m4\n\t"
+            "vwredsum.vs v4, v16, v1\n\t"
+            "vwredsum.vs v5, v20, v1\n\t"
+
+            // combain it
+            "vsetvli zero, %[vl4], e32, m1\n\t"
+            "vslideup.vi v2, v3, 1\n\t"
+            "vslideup.vi v2, v4, 2\n\t"
+            "vslideup.vi v2, v5, 3\n\t"
+            
+            // convert to float
+            "vfcvt.f.x.v v2, v2\n\t"
+            
+            // multiple with scale
+            "vfmul.vv v0, v0, v2\n\t"
+
+            // add up
+            "vfredsum.vs v0, v0, v1\n\t"
+
+            // debug
+            "vsetvli %[vl1], zero, e32, m1\n\t"
+            "vse.v v0, (%[output])"
+            :
+            : [scale_x_y] "r" (scale_x_y), [output] "r" (&output)
+            , [x0] "r" (&x[ib].qs), [y0] "r" (&y[ib].qs), [block_q8_0_size] "i" (sizeof(block_q8_0))
+            , [vl8] "r" (8), [vl4] "r" (4), [vl16] "r" (16), [vl64] "r" (64), [vl32] "r" (32), [vl1] "r" (1)
+            : "memory"
+            , "v0", "v1", "v2", "v3", "v4", "v5"
+            , "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15"
+            , "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23"
+        );
+        sumf += output;
+    }
+
     for (; ib < nb; ++ib) {
         // load elements
         vint8m2_t bx_0 = __riscv_vle8_v_i8m2(x[ib].qs, vl);
@@ -422,15 +515,12 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         vint16m4_t vw_mul = __riscv_vwmul_vv_i16m4(bx_0, by_0, vl);
 
-        vint32m1_t v_zero = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t v_sum = __riscv_vwredsum_vs_i16m4_i32m1(vw_mul, v_zero, vl);
 
         int sumi = __riscv_vmv_x_s_i32m1_i32(v_sum);
-
         sumf += sumi*(GGML_FP16_TO_FP32(x[ib].d)*GGML_FP16_TO_FP32(y[ib].d));
     }
-
-#endif
+#else
     for (; ib < nb; ++ib) {
         int sumi = 0;
 
@@ -440,7 +530,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         sumf += sumi*(GGML_FP16_TO_FP32(x[ib].d)*GGML_FP16_TO_FP32(y[ib].d));
     }
-
+#endif
     *s = sumf;
 }
 
