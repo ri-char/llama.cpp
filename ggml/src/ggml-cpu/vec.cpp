@@ -221,6 +221,30 @@ void ggml_vec_dot_f16(int n, float * GGML_RESTRICT s, size_t bs, ggml_fp16_t * G
     for (int i = np; i < n; ++i) {
         sumf += (ggml_float)(GGML_FP16_TO_FP32(x[i])*GGML_FP16_TO_FP32(y[i]));
     }
+#elif defined(__riscv_v)
+    int i = 0;
+    vfloat64m1_t v_zero = __riscv_vfmv_v_f_f64m1(0.0, 2);
+    for (; i < n; i+=16) {
+        vfloat32m4_t vecx = __riscv_vfwcvt_f_f_v_f32m4(__riscv_vle16_v_f16m2((const _Float16 *)&x[i], 16), 16);
+        vfloat32m4_t vecy = __riscv_vfwcvt_f_f_v_f32m4(__riscv_vle16_v_f16m2((const _Float16 *)&y[i], 16), 16);
+        vfloat64m8_t mul = __riscv_vfwmul_vv_f64m8(vecx, vecy, 16);
+        vfloat64m1_t sum = __riscv_vfredsum_vs_f64m8_f64m1(mul, v_zero, 16);
+        sumf += __riscv_vfmv_f_s_f64m1_f64(sum);
+    }
+    if (i != n) {
+        i -= 16;
+        if (n - i >= 8){
+            vfloat32m2_t vecx = __riscv_vfwcvt_f_f_v_f32m2(__riscv_vle16_v_f16m1((const _Float16 *)&x[i], 8), 8);
+            vfloat32m2_t vecy = __riscv_vfwcvt_f_f_v_f32m2(__riscv_vle16_v_f16m1((const _Float16 *)&y[i], 8), 8);
+            vfloat64m4_t mul = __riscv_vfwmul_vv_f64m4(vecx, vecy, 8);
+            vfloat64m1_t sum = __riscv_vfredsum_vs_f64m4_f64m1(mul, v_zero, 8);
+            sumf += __riscv_vfmv_f_s_f64m1_f64(sum);
+            i += 8;
+        }
+        for (; i < n; ++i) {
+            sumf += (ggml_float)(GGML_FP16_TO_FP32(x[i])*GGML_FP16_TO_FP32(y[i]));
+        }
+    }
 #else
     for (int i = 0; i < n; ++i) {
         sumf += (ggml_float)(GGML_FP16_TO_FP32(x[i])*GGML_FP16_TO_FP32(y[i]));
