@@ -268,7 +268,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
 #if defined(__riscv_v)
     size_t vl;
-    size_t vlenb = __riscv_vlenb();
+    // size_t vlenb = __riscv_vlenb();
 
     for (; ib < nb; ++ib) {
         vl = qk / 2;
@@ -342,7 +342,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
 #if defined(__riscv_v)
     size_t vl;
-    size_t vlenb = __riscv_vlenb();
+    // size_t vlenb = __riscv_vlenb();
 
     for (; ib < nb; ++ib) {
         vl = qk / 2;
@@ -415,6 +415,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #if defined(__riscv_v)
     size_t vl = qk;
 
+    vint32m1_t v_zero = __riscv_vmv_v_x_i32m1(0, vl);
     for (; ib < nb; ++ib) {
         // load elements
         vint8m2_t bx_0 = __riscv_vle8_v_i8m2(x[ib].qs, vl);
@@ -422,7 +423,6 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         vint16m4_t vw_mul = __riscv_vwmul_vv_i16m4(bx_0, by_0, vl);
 
-        vint32m1_t v_zero = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t v_sum = __riscv_vwredsum_vs_i16m4_i32m1(vw_mul, v_zero, vl);
 
         int sumi = __riscv_vmv_x_s_i32m1_i32(v_sum);

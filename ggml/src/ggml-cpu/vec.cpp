@@ -1,5 +1,7 @@
 #include "vec.h"
 
+#include "rvv_mathfun_fp32.h"
+
 #include <cassert>
 
 // precomputed gelu table for f16 (128 KB)
@@ -272,6 +274,17 @@ void ggml_vec_silu_f32(const int n, float * y, const float * x) {
     for (; i + 3 < n; i += 4) {
         vst1q_f32(y + i, ggml_v_silu(vld1q_f32(x + i)));
     }
+#elif defined(__riscv_v)
+    while (i < n) {
+        size_t vl = __riscv_vsetvl_e32m2(n - i);
+        vfloat32m2_t _x = __riscv_vle32_v_f32m2(&x[i], vl);
+        vfloat32m2_t _x_neg = __riscv_vfmul_vf_f32m2(_x, -1.0f, vl);
+        vfloat32m2_t _res = exp_ps_vfloat32m2(_x_neg, vl);
+        _res = __riscv_vfadd_vf_f32m2(_res, 1.0f, vl);
+        _res = __riscv_vfdiv_vv_f32m2(_x, _res, vl);
+        __riscv_vse32_v_f32m2(&y[i], _res, vl);
+        i += vl;
+    }
 #endif
     for (; i < n; ++i) {
         y[i] = ggml_silu_f32(x[i]);
@@ -321,6 +334,17 @@ ggml_float ggml_vec_soft_max_f32(const int n, float * y, const float * x, float 
                                                 vdupq_n_f32(max)));
         vst1q_f32(y + i, val);
         sum += (ggml_float)vaddvq_f32(val);
+    }
+#elif defined(__riscv_v)
+    vfloat64m1_t v_zero = __riscv_vfmv_v_f_f64m1(0.0, 1);
+    while (i < n) {
+        size_t vl = __riscv_vsetvl_e32m2(n - i);
+        vfloat32m2_t _x = __riscv_vle32_v_f32m2(&x[i], vl);
+        vfloat32m2_t exp_x_sub_max = exp_ps_vfloat32m2(__riscv_vfsub_vf_f32m2(_x, max, vl), vl);
+        __riscv_vse32_v_f32m2(&y[i], exp_x_sub_max, vl);
+        vfloat64m1_t v_sum = __riscv_vfwredsum_vs_f32m2_f64m1(exp_x_sub_max, v_zero, vl);
+        sum += __riscv_vfmv_f_s_f64m1_f64(v_sum);
+        i += vl;
     }
 #endif
     for (; i < n; ++i) {
